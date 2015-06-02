@@ -1,46 +1,46 @@
--module(quickSort).
--export([quickSort/1, test_loop/1, test_loop/3]).
+-module(parallelQuickSort).
+-export([pqsort/1, test_loop/1, test_loop/3]).
 
- %                     %
-%%%%%%%%%%%%%%%%%%%%%%%%%
- % Sequential QuickSort %
-%%%%%%%%%%%%%%%%%%%%%%%%%
- %                     %
+ %                    %
+%%%%%%%%%%%%%%%%%%%%%%%%
+ % Parallel QuickSort %
+%%%%%%%%%%%%%%%%%%%%%%%%
+ %                    %
 
-quickSort(List) when length(List) =< 1 ->
-    List;
-quickSort([Pivot | List]) ->
-    quickSort(quickSortMin(List, Pivot)) ++ [Pivot] ++ quickSort(quickSortMax(List, Pivot)).
+pmap(F, L) ->
+    S = self(),
+    Pids = lists:map(fun(I) -> spawn(fun() -> pmap_f(S, F, I) end) end, L),
+    pmap_gather(Pids).
 
+pmap_gather([H|T]) ->
+    receive
+        {H, Ret} -> [Ret|pmap_gather(T)]
+    end;
+pmap_gather([]) ->
+    [].
 
-quickSortMin([First], Pivot) when First =< Pivot ->
-    [First];
-quickSortMin([_], _) ->
-    [];
-quickSortMin([First | Tail], Pivot) when First =< Pivot ->
-    [First] ++ quickSortMin(Tail, Pivot);
-quickSortMin([_ | Tail], Pivot) ->
-    quickSortMin(Tail, Pivot).
+pmap_f(Parent, F, I) ->
+    Parent ! {self(), (catch F(I))}.
 
-
-quickSortMax([First], Pivot) when First > Pivot ->
-    [First];
-quickSortMax([_], _) ->
-    [];
-quickSortMax([First | Tail], Pivot) when First > Pivot ->
-    [First] ++ quickSortMax(Tail, Pivot);
-quickSortMax([_ | Tail], Pivot) ->
-    quickSortMax(Tail, Pivot).
+pqsort([]) -> [];
+pqsort([Pivot]) -> [Pivot];
+pqsort([Pivot|Rest]) ->
+    % io:format("+", []),
+    Left = [X || X <- Rest, X < Pivot],
+    Right = [Y || Y <- Rest, Y >= Pivot],
+    [SortedLeft, SortedRight] = pmap(fun pqsort/1, [Left, Right]),
+    % io:format("-", []),
+    SortedLeft ++ [Pivot] ++ SortedRight.
 
 %%%%%%%%%%%%%%%%%%%
 %% PROFILE STUFF %%
 %%%%%%%%%%%%%%%%%%%
 
 profile(Parameters) ->
-    timer:tc(quickSort, quickSort, [Parameters]).
+    timer:tc(parallelQuickSort, pqsort, [Parameters]).
 
 test_quickSort(Index, Len, Max) ->
-    File = io_lib:fwrite("./quickSort.~w.log", [Index]),
+    File = io_lib:fwrite("./paralllelQuickSort.~w.log", [Index]),
     Array = [random:uniform(Max) || _ <- lists:seq(1, Len)],
     file:write_file(File, io_lib:fwrite("Len: ~w\nMax: ~w\nArray: ~w\n", [Len, Max, Array])),
     {Time, Result} = profile(Array),
