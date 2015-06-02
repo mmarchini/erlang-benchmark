@@ -1,5 +1,5 @@
 -module(quickSort).
--export([quickSort/1, test_loop/3, granted_int/1]).
+-export([quickSort/1, test_loop/1, test_loop/3]).
 
 % Sequential QuickSort
 
@@ -53,4 +53,7 @@ granted_int(Num) when erlang:is_atom(Num) ->
 test_loop(Num, Len, Max) ->
     random:seed(1,2,3),
     test_looper(granted_int(Num), granted_int(Len), granted_int(Max)).
+
+test_loop([Num, Len, Max]) ->
+    test_loop(Num, Len, Max).
 

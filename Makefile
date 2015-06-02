@@ -6,4 +6,4 @@ compile: src/quickSort.erl
 	@erlc -o build/ src/quickSort.erl 
 
 run_tests:
-	@cd build/; erl -noshell -s quickSort test_loop 10, 10, 10 -s init stop
+	@cd build/; erl -noshell -s quickSort test_loop 100 1000 100 -s init stop
