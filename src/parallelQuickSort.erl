@@ -39,18 +39,15 @@ pqsort([Pivot|Rest]) ->
 profile(Parameters) ->
     timer:tc(parallelQuickSort, pqsort, [Parameters]).
 
-test_quickSort(Index, Len, Max) ->
-    File = io_lib:fwrite("./paralllelQuickSort.~w.log", [Index]),
-    Array = [random:uniform(Max) || _ <- lists:seq(1, Len)],
-    file:write_file(File, io_lib:fwrite("Len: ~w\nMax: ~w\nArray: ~w\n", [Len, Max, Array])),
-    {Time, Result} = profile(Array),
-    file:write_file(File, io_lib:fwrite("Time: ~w\nResult: ~w", [Time, Result]), [append]).
+test_quickSort(List, PerfFile) ->
+    {Time, _} = profile(List),
+    file:write(PerfFile, io_lib:fwrite("~w\n", [Time])).
 
-test_looper(Index, Len, Max) when Index > 0 ->
-    test_quickSort(Index, Len, Max),
-    test_looper(Index-1, Len, Max);
-test_looper(Index, _, _) when Index =< 0 ->
-    0.
+test_looper(_, 0, _) ->
+    ok;
+test_looper(List, Index, PerfFile) ->
+    test_quickSort(List, PerfFile),
+    test_looper(List, Index-1, PerfFile).
 
 granted_int(Num) when erlang:is_integer(Num) -> 
     Num;
@@ -60,10 +57,24 @@ granted_int(Num) when erlang:is_list(Num) ->
 granted_int(Num) when erlang:is_atom(Num) -> 
     granted_int(erlang:atom_to_list(Num)).
 
-test_loop(Num, Len, Max) ->
-    random:seed(1,2,3),
-    test_looper(granted_int(Num), granted_int(Len), granted_int(Max)).
+problemFromFileAux(_, eof) ->
+    [];
+problemFromFileAux(Device, Line) ->
+    [granted_int(Line)] ++ problemFromFileAux(Device, io:get_line(Device, "")).
 
-test_loop([Num, Len, Max]) ->
-    test_loop(Num, Len, Max).
+problemFromFileAux(Device) ->
+    problemFromFileAux(Device, io:get_line(Device, "")).
+
+problemFromFile(Filename) ->
+    {ok, File} = file:open(Filename, [read]),
+    problemFromFileAux(File).
+
+test_loop(ProblemFile, Repetitions, PerfFile) ->
+    {ok, PFile} = file:open(PerfFile, [write]),
+    Result = test_looper(problemFromFile(ProblemFile), granted_int(Repetitions), PFile),
+    file:close(PFile),
+    Result.
+
+test_loop([ProblemFile, Repetitions, PerfFile]) ->
+    test_loop(ProblemFile, Repetitions, PerfFile).
 
