@@ -1,6 +1,6 @@
 -module(queensProblem).
 -import(lists, [seq/2]).
--export([queensResolver/1]).
+-export([queensResolver/1, test_loop/1, test_loop/3]).
 
 % Tabuleiro NxN
 % N² possibilidades de posicionamento inicial (primeira peça)
@@ -26,4 +26,38 @@ evaluator(Rows, Columns, _) when length(Rows) /= length(Columns) ->
     [];
 evaluator(Rows, [Column | Columns], Pieces) ->
     lists:umerge([evaluator(Rows -- [Row], Columns, Pieces ++ [{Row, Column}]) || Row <- Rows, lists:all(fun ({PRow, PCol}) -> abs(PRow - Row) /= abs(PCol - Column) end, Pieces)]).
+
+%%%%%%%%%%%%%%%%%%%
+%% PROFILE STUFF %%
+%%%%%%%%%%%%%%%%%%%
+
+profile(N) ->
+    timer:tc(queensProblem, queensResolver, [N]).
+
+test_queensProblem(N, PerfFile) ->
+    {Time, _} = profile(N),
+    file:write(PerfFile, io_lib:fwrite("~w\n", [Time])).
+
+test_looper(_, 0, _) ->
+    ok;
+test_looper(N, Index, PerfFile) ->
+    test_queensProblem(N, PerfFile),
+    test_looper(N, Index-1, PerfFile).
+
+granted_int(Num) when erlang:is_integer(Num) -> 
+    Num;
+granted_int(Num) when erlang:is_list(Num) -> 
+    {NewNum, _} = string:to_integer(Num),
+    NewNum;
+granted_int(Num) when erlang:is_atom(Num) -> 
+    granted_int(erlang:atom_to_list(Num)).
+
+test_loop(N, Repetitions, PerfFile) ->
+    {ok, PFile} = file:open(PerfFile, [write]),
+    Result=test_looper(granted_int(N), granted_int(Repetitions), PFile),
+    file:close(PFile),
+    Result.
+
+test_loop([N, Repetitions, PerfFile]) ->
+    test_loop(N, Repetitions, PerfFile).
 

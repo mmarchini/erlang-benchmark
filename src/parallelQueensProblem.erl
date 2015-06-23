@@ -1,6 +1,6 @@
 -module(parallelQueensProblem).
 -import(lists, [seq/2]).
--export([queensResolver/2, queensResolverAux/4, queenResolverSpawn/5]).
+-export([queensResolver/2, queensResolverAux/4, queenResolverSpawn/5, test_loop/1, test_loop/4]).
 
 % Tabuleiro NxN
 % N² possibilidades de posicionamento inicial (primeira peça)
@@ -43,4 +43,38 @@ evaluator(Rows, Columns, _) when length(Rows) /= length(Columns) ->
     [];
 evaluator(Rows, [Column | Columns], Pieces) ->
     lists:umerge([evaluator(Rows -- [Row], Columns, Pieces ++ [{Row, Column}]) || Row <- Rows, lists:all(fun ({PRow, PCol}) -> abs(PRow - Row) /= abs(PCol - Column) end, Pieces)]).
+
+%%%%%%%%%%%%%%%%%%%
+%% PROFILE STUFF %%
+%%%%%%%%%%%%%%%%%%%
+
+profile(N, P) ->
+    timer:tc(parallelQueensProblem, queensResolver, [N, P]).
+
+test_queensProblem(N, P, PerfFile) ->
+    {Time, _} = profile(N, P),
+    file:write(PerfFile, io_lib:fwrite("~w\n", [Time])).
+
+test_looper(_, _, 0, _) ->
+    ok;
+test_looper(N, P, Index, PerfFile) ->
+    test_queensProblem(N, P, PerfFile),
+    test_looper(N, P, Index-1, PerfFile).
+
+granted_int(Num) when erlang:is_integer(Num) -> 
+    Num;
+granted_int(Num) when erlang:is_list(Num) -> 
+    {NewNum, _} = string:to_integer(Num),
+    NewNum;
+granted_int(Num) when erlang:is_atom(Num) -> 
+    granted_int(erlang:atom_to_list(Num)).
+
+test_loop(N, P, Repetitions, PerfFile) ->
+    {ok, PFile} = file:open(PerfFile, [write]),
+    Result=test_looper(granted_int(N), granted_int(P), granted_int(Repetitions), PFile),
+    file:close(PFile),
+    Result.
+
+test_loop([N, P, Repetitions, PerfFile]) ->
+    test_loop(N, P, Repetitions, PerfFile).
 
