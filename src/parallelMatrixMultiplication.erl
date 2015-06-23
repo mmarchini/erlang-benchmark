@@ -83,7 +83,7 @@ granted_int(Num) when erlang:is_atom(Num) ->
 problemFromFileAux(_, eof) ->
     [];
 problemFromFileAux(Device, Line) ->
-    [[granted_int(Num) || Num <- string:tokens(Line, " ")]] ++ problemFromFileAux(Device, io:get_line(Device, "")).
+    [[granted_int(Num) || Num <- string:tokens(Line, ",")]] ++ problemFromFileAux(Device, io:get_line(Device, "")).
 
 problemFromFileAux(Device) ->
     problemFromFileAux(Device, io:get_line(Device, "")).
