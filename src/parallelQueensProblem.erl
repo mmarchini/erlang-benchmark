@@ -56,7 +56,7 @@ test_queensProblem(N, P, PerfFile) ->
     file:write(PerfFile, io_lib:fwrite("~w\n", [Time])).
 
 test_looper(_, _, 0, _) ->
-    ok;
+    0;
 test_looper(N, P, Index, PerfFile) ->
     test_queensProblem(N, P, PerfFile),
     test_looper(N, P, Index-1, PerfFile).

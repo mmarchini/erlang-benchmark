@@ -44,7 +44,7 @@ test_quickSort(List, PerfFile) ->
     file:write(PerfFile, io_lib:fwrite("~w\n", [Time])).
 
 test_looper(_, 0, _) ->
-    ok;
+    0;
 test_looper(List, Index, PerfFile) ->
     test_quickSort(List, PerfFile),
     test_looper(List, Index-1, PerfFile).

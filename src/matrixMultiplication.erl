@@ -42,7 +42,7 @@ test_matrixMultiplication(A, B, PerfFile) ->
     file:write(PerfFile, io_lib:fwrite("~w\n", [Time])), Result.
 
 test_looper(_, _, 0, _) ->
-    ok;
+    0;
 test_looper(A, B, Index, PerfFile) ->
     test_matrixMultiplication(A, B, PerfFile),
     test_looper(A, B, Index-1, PerfFile).
